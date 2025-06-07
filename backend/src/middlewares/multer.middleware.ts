@@ -18,5 +18,5 @@ const messageImageStorage = new CloudinaryStorage({
   }),
 });
 
-export const profileUplaod = multer({ storage: userProfileStorage });
+export const profileUpload = multer({ storage: userProfileStorage });
 export const messageUpload = multer({ storage: messageImageStorage });

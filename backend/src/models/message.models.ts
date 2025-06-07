@@ -1,27 +1,25 @@
-import { Document, model, Schema, Types } from "mongoose";
+import { Document, model, Schema, Types } from 'mongoose';
 
 // Interface
 export interface IMessage extends Document {
   sender: Types.ObjectId;
   receiver: Types.ObjectId;
   message: string;
-  image?: string; 
-  createdAt: Date;
-  updatedAt: Date;
+  image?: string;
 }
 
 // Schema
 const messageSchema = new Schema<IMessage>(
   {
-    sender: { type: Schema.Types.ObjectId, ref: "User", required: true },
-    receiver: { type: Schema.Types.ObjectId, ref: "User", required: true },
+    sender: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+    receiver: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     message: { type: String, required: true },
     image: { type: String },
   },
   {
-    timestamps: true, 
+    timestamps: true,
   }
 );
 
 // Model
-export const messageModel = model<IMessage>("Message", messageSchema);
+export const messageModel = model<IMessage>('Message', messageSchema);
