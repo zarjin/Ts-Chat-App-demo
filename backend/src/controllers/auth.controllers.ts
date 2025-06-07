@@ -45,6 +45,7 @@ export const Register = async (req: Request, res: Response): Promise<void> => {
         email: newUser.email,
         profilePic: newUser.profilePic,
       },
+      token: token,
     });
   } catch (error) {
     console.error('Register Error:', error);
@@ -89,6 +90,7 @@ export const Login = async (req: Request, res: Response): Promise<void> => {
         email: user.email,
         profilePic: user.profilePic,
       },
+      token: token,
     });
   } catch (error) {
     console.error('Login Error:', error);

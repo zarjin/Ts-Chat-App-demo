@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Backend Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .result { margin: 10px 0; padding: 10px; border: 1px solid #ccc; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        button { margin: 5px; padding: 10px; }
+    </style>
+</head>
+<body>
+    <h1>Backend API Test</h1>
+    
+    <div>
+        <button onclick="testConnection()">Test Connection</button>
+        <button onclick="testLogin()">Test Login</button>
+        <button onclick="testSendMessage()">Test Send Message</button>
+        <button onclick="clearResults()">Clear Results</button>
+    </div>
+    
+    <div id="results"></div>
+
+    <script>
+        const API_BASE = 'http://localhost:5000';
+        let authToken = '';
+        let userId = '';
+
+        function addResult(message, isSuccess = true) {
+            const div = document.createElement('div');
+            div.className = `result ${isSuccess ? 'success' : 'error'}`;
+            div.innerHTML = `<strong>${new Date().toLocaleTimeString()}</strong>: ${message}`;
+            document.getElementById('results').appendChild(div);
+        }
+
+        function clearResults() {
+            document.getElementById('results').innerHTML = '';
+        }
+
+        async function testConnection() {
+            try {
+                const response = await fetch(`${API_BASE}/`);
+                const text = await response.text();
+                addResult(`✅ Connection successful: ${text}`);
+            } catch (error) {
+                addResult(`❌ Connection failed: ${error.message}`, false);
+            }
+        }
+
+        async function testLogin() {
+            try {
+                const response = await fetch(`${API_BASE}/api/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        email: 'alice@demo.com',
+                        password: 'password123'
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                authToken = data.token;
+                userId = data.user.id;
+                
+                addResult(`✅ Login successful: ${data.user.fullName} (${data.user.email})`);
+                addResult(`🔑 Token received: ${authToken ? 'Yes' : 'No'}`);
+                addResult(`👤 User ID: ${userId}`);
+            } catch (error) {
+                addResult(`❌ Login failed: ${error.message}`, false);
+            }
+        }
+
+        async function testSendMessage() {
+            if (!authToken) {
+                addResult('❌ Please login first', false);
+                return;
+            }
+
+            try {
+                // First get all users to find a receiver
+                const usersResponse = await fetch(`${API_BASE}/api/user/getall`, {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                    },
+                    credentials: 'include'
+                });
+
+                if (!usersResponse.ok) {
+                    throw new Error(`Failed to get users: ${usersResponse.status}`);
+                }
+
+                const users = await usersResponse.json();
+                const receiver = users.find(u => u._id !== userId);
+                
+                if (!receiver) {
+                    addResult('❌ No other users found to send message to', false);
+                    return;
+                }
+
+                // Send a test message
+                const messageResponse = await fetch(`${API_BASE}/api/message/send/${receiver._id}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`,
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        message: `Test message from browser at ${new Date().toLocaleTimeString()}`,
+                        image: ''
+                    })
+                });
+
+                if (!messageResponse.ok) {
+                    throw new Error(`HTTP ${messageResponse.status}: ${messageResponse.statusText}`);
+                }
+
+                const messageData = await messageResponse.json();
+                addResult(`✅ Message sent successfully to ${receiver.fullName}`);
+                addResult(`📝 Message: "${messageData.message}"`);
+                
+            } catch (error) {
+                addResult(`❌ Send message failed: ${error.message}`, false);
+            }
+        }
+    </script>
+</body>
+</html>

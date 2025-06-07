@@ -23,7 +23,13 @@ export const sendMessage = async (
       image: req.file?.path || '',
     });
 
-    res.status(200).json(newMessage);
+    // Populate sender and receiver information
+    const populatedMessage = await messageModel
+      .findById(newMessage._id)
+      .populate('sender', 'fullName email profilePic')
+      .populate('receiver', 'fullName email profilePic');
+
+    res.status(200).json(populatedMessage);
   } catch (error) {
     res
       .status(500)
@@ -51,6 +57,8 @@ export const getMessage = async (
           { sender: receiverId, receiver: senderId },
         ],
       })
+      .populate('sender', 'fullName email profilePic')
+      .populate('receiver', 'fullName email profilePic')
       .sort({ createdAt: 1 }); // Assuming you want them in order
 
     res.status(200).json(messages);
